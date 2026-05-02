@@ -1,14 +1,81 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교실 대시보드 - Classroom Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            overflow: hidden;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .glow-yellow { box-shadow: 0 0 20px rgba(234, 179, 8, 0.5); }
+        .glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
-<body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+<body class="h-screen w-screen flex flex-col p-4 gap-4">
+
+    <!-- Top Header: Clock & Weather -->
+    <header class="flex justify-between items-center h-24 px-6 glass rounded-2xl">
+        <class-clock></class-clock>
+        <class-weather></class-weather>
+    </header>
+
+    <main class="flex-1 flex gap-4 min-h-0">
+        <!-- Left Section: Timetable & Traffic Light -->
+        <div class="w-[60%] flex flex-col gap-4">
+            <!-- Timetable Card -->
+            <section class="flex-1 glass rounded-2xl p-6 flex flex-col min-h-0">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span class="w-2 h-6 bg-blue-500 rounded-full"></span>
+                    스마트 타임테이블
+                </h2>
+                <class-timetable class="flex-1 overflow-y-auto"></class-timetable>
+            </section>
+
+            <!-- Traffic Light Card -->
+            <section class="h-40 glass rounded-2xl p-6 flex flex-col justify-center">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span class="w-2 h-6 bg-yellow-500 rounded-full"></span>
+                    수업 신호등
+                </h2>
+                <class-traffic-light></class-traffic-light>
+            </section>
+        </div>
+
+        <!-- Right Section: Notice Board -->
+        <aside class="w-[40%] glass rounded-2xl p-6 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span class="w-2 h-6 bg-green-500 rounded-full"></span>
+                디지털 알림장
+            </h2>
+            <class-notice class="flex-1 h-full"></class-notice>
+        </aside>
+    </main>
+
+    <!-- Global Alarm Sound -->
+    <audio id="alarm-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script src="main.js" type="module"></script>
 </body>
 </html>
