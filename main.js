@@ -1,8 +1,11 @@
 import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
 
 /**
- * Classroom Dashboard Core Logic V2
+ * Classroom Dashboard Core Logic V2.1
+ * Hardcoded API Key for Seamless User Experience
  */
+
+const DEFAULT_API_KEY = 'AIzaSyCrgAGAcJ48ZOzmJwg13ScZqd--GebwhvY';
 
 // 1. Clock Component
 class ClassClock extends HTMLElement {
@@ -141,19 +144,18 @@ class ClassTimetable extends HTMLElement {
 }
 customElements.define('class-timetable', ClassTimetable);
 
-// 6. Gemini Chatbot Component
+// 6. Gemini Chatbot Component (Simplified for User Experience)
 class ClassChatbot extends HTMLElement {
     constructor() {
         super();
         this.history = [];
-        this.apiKey = localStorage.getItem('gemini-api-key') || '';
+        this.apiKey = DEFAULT_API_KEY;
     }
     connectedCallback() { this.render(); }
     async send() {
         const input = this.querySelector('input');
         const text = input.value.trim();
         if(!text) return;
-        if(!this.apiKey) { alert('API 키를 먼저 입력해주세요.'); return; }
 
         this.history.push({ role: 'user', text });
         input.value = '';
@@ -170,27 +172,23 @@ class ClassChatbot extends HTMLElement {
         }
         this.render();
     }
-    saveKey(k) { this.apiKey = k; localStorage.setItem('gemini-api-key', k); this.render(); }
     render() {
         this.innerHTML = `
             <div class='flex flex-col h-full gap-2'>
-                ${!this.apiKey ? `
-                    <div class='p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl'>
-                        <p class='text-xs text-purple-300 mb-2'>API 키가 필요합니다 (Google AI Studio)</p>
-                        <input type='password' placeholder='Enter API Key...' class='w-full bg-slate-900 p-2 rounded text-xs' onchange='this.closest("class-chatbot").saveKey(this.value)'>
-                    </div>` : `
-                    <div class='flex-1 overflow-y-auto space-y-2 p-2 bg-black/20 rounded-xl' id='chat-box'>
-                        ${this.history.map(m => `
+                <div class='flex-1 overflow-y-auto space-y-2 p-2 bg-black/20 rounded-xl' id='chat-box'>
+                    ${this.history.length === 0 ? 
+                        "<div class='h-full flex items-center justify-center text-slate-500 text-[10px]'>제미나이 AI와 대화를 시작해보세요.</div>" :
+                        this.history.map(m => `
                             <div class='p-2 rounded-lg text-xs ${m.role==='user'?"bg-purple-600/20 ml-4 text-right":"bg-slate-700/50 mr-4 text-left"}'>
                                 <p class='opacity-50 text-[8px] mb-1'>${m.role==='user'?'나':'제미나이'}</p>
                                 <p class='whitespace-pre-wrap'>${m.text}</p>
-                            </div>`).join('')}
-                    </div>
-                    <div class='flex gap-2'>
-                        <input type='text' placeholder='무엇이든 물어보세요...' class='flex-1 bg-slate-900 p-2 rounded text-xs' onkeypress='if(event.key==="Enter") this.closest("class-chatbot").send()'>
-                        <button onclick='this.closest("class-chatbot").send()' class='px-3 bg-purple-600 rounded text-xs'>송신</button>
-                    </div>`
-                }
+                            </div>`).join('')
+                    }
+                </div>
+                <div class='flex gap-2'>
+                    <input type='text' placeholder='무엇이든 물어보세요...' class='flex-1 bg-slate-900 p-2 rounded text-xs' onkeypress='if(event.key==="Enter") this.closest("class-chatbot").send()'>
+                    <button onclick='this.closest("class-chatbot").send()' class='px-3 bg-purple-600 rounded text-xs'>송신</button>
+                </div>
             </div>`;
         const box = this.querySelector('#chat-box');
         if(box) box.scrollTop = box.scrollHeight;
