@@ -1,6 +1,7 @@
+import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
+
 /**
- * Classroom Dashboard Core Logic
- * Using Web Components for modularity and LocalStorage for persistence.
+ * Classroom Dashboard Core Logic V2
  */
 
 // 1. Clock Component
@@ -9,78 +10,48 @@ class ClassClock extends HTMLElement {
         this.update();
         this.interval = setInterval(() => this.update(), 1000);
     }
-    disconnectedCallback() {
-        clearInterval(this.interval);
-    }
+    disconnectedCallback() { clearInterval(this.interval); }
     update() {
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('ko-KR', { 
-            hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        });
-        const dateStr = now.toLocaleDateString('ko-KR', { 
-            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
-        });
-        
+        const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
         this.innerHTML = `
             <div class='flex flex-col'>
                 <span class='text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400'>${timeStr}</span>
                 <span class='text-sm text-slate-400 font-medium'>${dateStr}</span>
-            </div>
-        `;
+            </div>`;
     }
 }
 customElements.define('class-clock', ClassClock);
 
-// 2. Weather Component (Simulated Gemini API Integration)
+// 2. Weather Component
 class ClassWeather extends HTMLElement {
     async connectedCallback() {
-        this.innerHTML = '<div class="text-slate-500 animate-pulse text-sm">Gemini AI가 날씨 분석 중...</div>';
-        await this.fetchWeather();
-    }
-    async fetchWeather() {
-        // Simulating Gemini Flash 2.5 response
-        setTimeout(() => {
-            const mockData = {
-                temp: 24,
-                condition: '쾌청',
-                dust: '좋음 (12µg/m³)',
-                icon: '☀️',
-                advice: '활동하기 좋은 날씨입니다.'
-            };
-            this.render(mockData);
-        }, 2000);
+        this.innerHTML = '<div class="text-slate-500 animate-pulse text-sm">날씨 분석 중...</div>';
+        setTimeout(() => this.render({ temp: 24, condition: '쾌청', dust: '좋음', icon: '☀️', advice: '활동하기 좋은 날씨입니다.' }), 1500);
     }
     render(data) {
         this.innerHTML = `
             <div class='flex items-center gap-4 text-right'>
                 <div class='flex flex-col'>
                     <div class='flex items-center justify-end gap-2'>
-                        <span class='text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold tracking-tighter'>GEMINI AI</span>
+                        <span class='text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold'>AI</span>
                         <span class='text-xl font-bold text-slate-200'>${data.condition} ${data.temp}°C</span>
                     </div>
-                    <span class='text-xs text-slate-400'>${data.advice} | 미세먼지: <span class='text-green-400'>${data.dust}</span></span>
+                    <span class='text-xs text-slate-400'>${data.advice}</span>
                 </div>
-                <span class='text-4xl filter drop-shadow-lg'>${data.icon}</span>
-            </div>
-        `;
+                <span class='text-4xl'>${data.icon}</span>
+            </div>`;
     }
 }
 customElements.define('class-weather', ClassWeather);
 
-// 3. Notice Board Component
+// 3. Notice Component
 class ClassNotice extends HTMLElement {
     connectedCallback() {
         const saved = localStorage.getItem('class-notice') || '';
-        this.innerHTML = `
-            <textarea 
-                class='w-full h-full bg-transparent border-none outline-none resize-none text-lg leading-relaxed text-slate-300 placeholder-slate-600 font-light'
-                placeholder='오늘의 알림 사항을 입력하세요...'
-            >${saved}</textarea>
-        `;
-        const textarea = this.querySelector('textarea');
-        textarea.addEventListener('input', (e) => {
-            localStorage.setItem('class-notice', e.target.value);
-        });
+        this.innerHTML = `<textarea class='w-full h-full bg-transparent border-none outline-none resize-none text-lg text-slate-300' placeholder='알림 사항 입력...'>${saved}</textarea>`;
+        this.querySelector('textarea').addEventListener('input', (e) => localStorage.setItem('class-notice', e.target.value));
     }
 }
 customElements.define('class-notice', ClassNotice);
@@ -91,127 +62,138 @@ class ClassTrafficLight extends HTMLElement {
         this.state = localStorage.getItem('class-traffic-state') || 'green';
         this.render();
     }
-    setState(newState) {
-        this.state = newState;
-        localStorage.setItem('class-traffic-state', newState);
-        this.render();
-    }
+    setState(s) { this.state = s; localStorage.setItem('class-traffic-state', s); this.render(); }
     render() {
-        const states = [
-            { id: 'red', label: '정숙', color: 'bg-red-500', glow: 'glow-red' },
-            { id: 'yellow', label: '집중', color: 'bg-yellow-500', glow: 'glow-yellow' },
-            { id: 'green', label: '활동', color: 'bg-green-500', glow: 'glow-green' }
-        ];
-
-        this.innerHTML = `
-            <div class='flex gap-8 items-center justify-around h-full'>
-                ${states.map(s => `
-                    <button 
-                        onclick="this.closest('class-traffic-light').setState('${s.id}')"
-                        class='flex flex-col items-center gap-3 group transition-transform active:scale-95'
-                    >
-                        <div class='w-14 h-14 rounded-full transition-all duration-500 ${this.state === s.id ? s.color + ' ' + s.glow + ' scale-110' : 'bg-slate-700 opacity-30 group-hover:opacity-50'}'></div>
-                        <span class='text-xs font-black tracking-widest ${this.state === s.id ? 'text-slate-100' : 'text-slate-500'}'>${s.label}</span>
-                    </button>
-                `).join('')}
-            </div>
-        `;
+        const states = [{id:'red',l:'정숙',c:'bg-red-500'}, {id:'yellow',l:'집중',c:'bg-yellow-500'}, {id:'green',l:'활동',c:'bg-green-500'}];
+        this.innerHTML = `<div class='flex gap-8 justify-around'>${states.map(s => `
+            <button onclick='this.closest("class-traffic-light").setState("${s.id}")' class='flex flex-col items-center gap-2'>
+                <div class='w-12 h-12 rounded-full transition-all ${this.state===s.id?s.c+" shadow-lg scale-110":"bg-slate-700 opacity-30"}'></div>
+                <span class='text-xs font-bold ${this.state===s.id?"text-white":"text-slate-500"}'>${s.l}</span>
+            </button>`).join('')}</div>`;
     }
 }
 customElements.define('class-traffic-light', ClassTrafficLight);
 
-// 5. Timetable Component (With Edit Mode)
+// 5. Advanced Timetable Component
 class ClassTimetable extends HTMLElement {
     constructor() {
         super();
-        const defaultPeriods = [
-            { id: 1, name: '1교시', start: '09:00', end: '09:40' },
-            { id: 2, name: '2교시', start: '09:50', end: '10:30' },
-            { id: 3, name: '3교시', start: '10:40', end: '11:20' },
-            { id: 4, name: '4교시', start: '11:30', end: '12:10' },
-            { id: 5, name: '점심시간', start: '12:10', end: '13:00' },
-            { id: 6, name: '5교시', start: '13:00', end: '13:40' }
-        ];
-        this.periods = JSON.parse(localStorage.getItem('class-timetable')) || defaultPeriods;
+        const def = [{id:1,name:'1교시',start:'09:00',end:'09:40',alarm:true,sound:'bell'}];
+        this.periods = JSON.parse(localStorage.getItem('class-timetable')) || def;
         this.isEditing = false;
     }
-    connectedCallback() {
-        this.render();
-        this.checkInterval = setInterval(() => this.checkAlarm(), 10000);
-    }
-    disconnectedCallback() {
-        clearInterval(this.checkInterval);
-    }
-    toggleEdit() {
-        this.isEditing = !this.isEditing;
-        if (!this.isEditing) {
-            localStorage.setItem('class-timetable', JSON.stringify(this.periods));
-        }
-        this.render();
-    }
-    updatePeriod(index, field, value) {
-        this.periods[index][field] = value;
-    }
-    checkAlarm() {
+    connectedCallback() { this.render(); this.timer = setInterval(() => this.check(), 10000); }
+    disconnectedCallback() { clearInterval(this.timer); }
+    toggleEdit() { this.isEditing = !this.isEditing; if(!this.isEditing) localStorage.setItem('class-timetable', JSON.stringify(this.periods)); this.render(); }
+    add() { this.periods.push({id:this.periods.length+1,name:'새 교시',start:'00:00',end:'00:00',alarm:true,sound:'bell'}); this.render(); }
+    remove(i) { this.periods.splice(i,1); this.render(); }
+    update(i,f,v) { this.periods[i][f] = v; }
+    check() {
         const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const cur = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         this.periods.forEach(p => {
-            if (p.start === currentTime && !p.alarmed) {
-                this.triggerAlarm(p);
-                p.alarmed = true;
+            if(p.start === cur && p.alarm && !p.ringed) {
+                const s = document.getElementById('alarm-'+p.sound);
+                if(s) s.play().catch(()=>{});
+                p.ringed = true;
+                alert('🔔 ['+p.name+'] 시작 시간입니다!');
             }
         });
         this.render();
     }
-    triggerAlarm(p) {
-        const sound = document.getElementById('alarm-sound');
-        if (sound) sound.play().catch(() => {});
-        // Visual alarm
-        document.body.classList.add('glow-blue');
-        setTimeout(() => document.body.classList.remove('glow-blue'), 5000);
-    }
     render() {
         const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
+        const cur = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         this.innerHTML = `
             <div class='flex flex-col h-full'>
-                <div class='flex justify-end mb-2'>
-                    <button onclick='this.closest("class-timetable").toggleEdit()' class='text-[10px] px-3 py-1 rounded-full border border-slate-700 hover:bg-slate-700 transition-colors'>
-                        ${this.isEditing ? '저장하기' : '일정 편집'}
-                    </button>
+                <div class='flex justify-end gap-2 mb-2'>
+                    ${this.isEditing ? `<button onclick='this.closest("class-timetable").add()' class='text-xs px-2 py-1 bg-blue-600 rounded'>추가</button>` : ''}
+                    <button onclick='this.closest("class-timetable").toggleEdit()' class='text-xs px-2 py-1 bg-slate-700 rounded'>${this.isEditing?'저장':'편집'}</button>
                 </div>
-                <div class='flex-1 overflow-y-auto space-y-3 pr-2'>
-                    ${this.periods.map((p, i) => {
-                        const isActive = !this.isEditing && currentTime >= p.start && currentTime < p.end;
+                <div class='flex-1 overflow-y-auto space-y-2 pr-1'>
+                    ${this.periods.map((p,i) => {
+                        const act = !this.isEditing && cur >= p.start && cur < p.end;
                         return `
-                            <div class='flex items-center justify-between p-4 rounded-xl transition-all ${isActive ? 'bg-blue-600/30 border border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.2)] scale-[1.02]' : 'bg-slate-800/40 border border-white/5'}'>
-                                <div class='flex items-center gap-4'>
-                                    <span class='w-8 h-8 flex items-center justify-center rounded-lg ${isActive ? 'bg-blue-500' : 'bg-slate-700'} font-bold text-xs'>${p.id}</span>
-                                    ${this.isEditing ? 
-                                        `<input type='text' value='${p.name}' oninput='this.closest("class-timetable").updatePeriod(${i}, "name", this.value)' class='bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm w-24'>` :
-                                        `<span class='font-bold text-lg ${isActive ? 'text-blue-200' : 'text-slate-300'}'>${p.name}</span>`
-                                    }
-                                </div>
-                                <div class='flex items-center gap-2'>
-                                    ${this.isEditing ? 
-                                        `<div class='flex gap-1'>
-                                            <input type='time' value='${p.start}' oninput='this.closest("class-timetable").updatePeriod(${i}, "start", this.value)' class='bg-slate-900 border border-slate-700 rounded px-1 text-xs'>
-                                            <span class='text-slate-600'>~</span>
-                                            <input type='time' value='${p.end}' oninput='this.closest("class-timetable").updatePeriod(${i}, "end", this.value)' class='bg-slate-900 border border-slate-700 rounded px-1 text-xs'>
-                                        </div>` :
-                                        `<div class='text-right'>
-                                            <span class='block font-mono text-xl ${isActive ? 'text-blue-400' : 'text-slate-500'}'>${p.start} ~ ${p.end}</span>
-                                            ${isActive ? "<span class='text-[10px] uppercase tracking-widest text-blue-400 font-bold animate-pulse'>수업 중</span>" : ''}
-                                        </div>`
-                                    }
-                                </div>
-                            </div>
-                        `;
+                        <div class='flex items-center gap-3 p-3 rounded-lg ${act?"bg-blue-600/30 border border-blue-500/50":"bg-slate-800/40 border border-white/5"}'>
+                            <span class='text-xs font-bold text-slate-500'>${i+1}</span>
+                            ${this.isEditing ? 
+                                `<input type='text' value='${p.name}' oninput='this.closest("class-timetable").update(${i},"name",this.value)' class='bg-slate-900 text-xs p-1 rounded w-20'>
+                                 <input type='time' value='${p.start}' oninput='this.closest("class-timetable").update(${i},"start",this.value)' class='bg-slate-900 text-xs p-1 rounded'>
+                                 <input type='time' value='${p.end}' oninput='this.closest("class-timetable").update(${i},"end",this.value)' class='bg-slate-900 text-xs p-1 rounded'>
+                                 <div class='flex flex-col gap-1'>
+                                    <label class='text-[8px] flex items-center gap-1'><input type='checkbox' ${p.alarm?"checked":""} onchange='this.closest("class-timetable").update(${i},"alarm",this.checked)'> 알람</label>
+                                    <select onchange='this.closest("class-timetable").update(${i},"sound",this.value)' class='bg-slate-900 text-[8px] p-0.5 rounded'>
+                                        <option value='bell' ${p.sound==='bell'?"selected":""}>벨</option>
+                                        <option value='chime' ${p.sound==='chime'?"selected":""}>차임</option>
+                                        <option value='digital' ${p.sound==='digital'?"selected":""}>디지털</option>
+                                    </select>
+                                 </div>
+                                 <button onclick='this.closest("class-timetable").remove(${i})' class='text-red-500 text-xs'>&times;</button>` :
+                                `<span class='flex-1 font-bold ${act?"text-blue-200":"text-slate-300"}'>${p.name}</span>
+                                 <span class='font-mono text-sm ${act?"text-blue-400":"text-slate-500"}'>${p.start} ~ ${p.end}</span>
+                                 ${p.alarm ? "<span class='text-[10px]'>🔔</span>" : ""}`
+                            }
+                        </div>`;
                     }).join('')}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 }
 customElements.define('class-timetable', ClassTimetable);
+
+// 6. Gemini Chatbot Component
+class ClassChatbot extends HTMLElement {
+    constructor() {
+        super();
+        this.history = [];
+        this.apiKey = localStorage.getItem('gemini-api-key') || '';
+    }
+    connectedCallback() { this.render(); }
+    async send() {
+        const input = this.querySelector('input');
+        const text = input.value.trim();
+        if(!text) return;
+        if(!this.apiKey) { alert('API 키를 먼저 입력해주세요.'); return; }
+
+        this.history.push({ role: 'user', text });
+        input.value = '';
+        this.render();
+
+        try {
+            const genAI = new GoogleGenerativeAI(this.apiKey);
+            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            const result = await model.generateContent(text);
+            const response = await result.response;
+            this.history.push({ role: 'model', text: response.text() });
+        } catch (e) {
+            this.history.push({ role: 'error', text: '오류 발생: ' + e.message });
+        }
+        this.render();
+    }
+    saveKey(k) { this.apiKey = k; localStorage.setItem('gemini-api-key', k); this.render(); }
+    render() {
+        this.innerHTML = `
+            <div class='flex flex-col h-full gap-2'>
+                ${!this.apiKey ? `
+                    <div class='p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl'>
+                        <p class='text-xs text-purple-300 mb-2'>API 키가 필요합니다 (Google AI Studio)</p>
+                        <input type='password' placeholder='Enter API Key...' class='w-full bg-slate-900 p-2 rounded text-xs' onchange='this.closest("class-chatbot").saveKey(this.value)'>
+                    </div>` : `
+                    <div class='flex-1 overflow-y-auto space-y-2 p-2 bg-black/20 rounded-xl' id='chat-box'>
+                        ${this.history.map(m => `
+                            <div class='p-2 rounded-lg text-xs ${m.role==='user'?"bg-purple-600/20 ml-4 text-right":"bg-slate-700/50 mr-4 text-left"}'>
+                                <p class='opacity-50 text-[8px] mb-1'>${m.role==='user'?'나':'제미나이'}</p>
+                                <p class='whitespace-pre-wrap'>${m.text}</p>
+                            </div>`).join('')}
+                    </div>
+                    <div class='flex gap-2'>
+                        <input type='text' placeholder='무엇이든 물어보세요...' class='flex-1 bg-slate-900 p-2 rounded text-xs' onkeypress='if(event.key==="Enter") this.closest("class-chatbot").send()'>
+                        <button onclick='this.closest("class-chatbot").send()' class='px-3 bg-purple-600 rounded text-xs'>송신</button>
+                    </div>`
+                }
+            </div>`;
+        const box = this.querySelector('#chat-box');
+        if(box) box.scrollTop = box.scrollHeight;
+    }
+}
+customElements.define('class-chatbot', ClassChatbot);
