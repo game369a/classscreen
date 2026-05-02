@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
 
 /**
- * Classroom Dashboard Core Logic V2.1
+ * Classroom Dashboard Core Logic V2.2 (Env Support)
  * Hardcoded API Key for Seamless User Experience
  */
 
-const DEFAULT_API_KEY = 'AIzaSyCrgAGAcJ48ZOzmJwg13ScZqd--GebwhvY';
+const DEFAULT_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // 1. Clock Component
 class ClassClock extends HTMLElement {
